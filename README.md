@@ -69,10 +69,10 @@ program.predict(prediction_set)
 
 ### 4. Options
 
-The lower bound running time of the #predict method is cubic / Ω(n3). Hence, on very large datasets (more than 1,000 columns / features), the #predict method can be slow. If this happens, use the #predict_advanced method, which uses gradient descent (approximation) instead of normalization (direct calculation). Gradient descent can be a bit less accurate and also requires some optional parameters.
+The lower bound running time of the *#predict* method is cubic / Ω(n3). Hence, on very large datasets (more than 1,000 columns / features), the *#predict* method can be slow. If this happens, use the *#predict_advanced* method, which uses gradient descent (approximation) instead of normalization (direct calculation). Gradient descent can be a bit less accurate and also requires some optional parameters.
 
-The #predict_advanced method takes 4 parameters in the following order:
-1. The prediction_set, similar to the #prediction method discussed above
+The *#predict_advanced* method takes 4 parameters in the following order:
+1. The prediction_set, similar to the *#prediction* method discussed above
 2. The learning rate (how big of a "jump" each iteration makes). The smaller the learning rate, the less errors are to be expected. Unfortunately, a smaller learning rate requires more iterations (see below). Start at 0.001 and increase the parameter to 0.01, 0.1, 1, etc if the calculation is too slow.
 3. The number of iterations. The more iterations, the longer accurate the result will but the slower the algorithm will run.
 4. Whether you want print out values to see at which point convergence happens.
