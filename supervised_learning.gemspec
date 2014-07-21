@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = SupervisedLearning::VERSION
   spec.authors       = ["Michael Imstepf"]
   spec.email         = ["michael.imstepf@gmail.com"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
+  spec.summary       = %q{A module to make predictions based on a set of training data.}
+  spec.description   = %q{Supervised learning is the machine learning task of inferring a function from labeled training data. A supervised learning algorithm analyzes the training data and produces an inferred function, which can be used for mapping new examples.}
   spec.homepage      = ""
   spec.license       = "MIT"
 
