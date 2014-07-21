@@ -103,13 +103,13 @@ describe SupervisedLearning::LinearRegression do
     context 'when prediction has correct amount of columns' do
       context 'when training set has one feature' do
         it 'returns correct prediction' do
-          expect(program_one_feature.predict_advanced(Matrix[ [1650] ], 0.1, 600, false).to_i).to be_within(200).of(293237)
+          expect(program_one_feature.predict_advanced(Matrix[ [1650] ], 0.01, 600, false).to_i).to be_within(200).of(293237)
         end        
       end
 
-      context 'when training set has two features' do
+      context 'when training set has two features', :focus do
         it 'returns correct prediction' do
-          expect(program_two_features.predict_advanced(Matrix[ [1650, 3] ], 0.1, 600, false).to_i).to be_within(200).of(293237)
+          expect(program_two_features.predict_advanced(Matrix[ [1650, 3] ], 0.01, 600, true).to_i).to be_within(200).of(293237)
         end        
       end            
     end              
