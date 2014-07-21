@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["michael.imstepf@gmail.com"]
   spec.summary       = %q{A module to make predictions based on a set of training data.}
   spec.description   = %q{Supervised learning is the machine learning task of inferring a function from labeled training data. A supervised learning algorithm analyzes the training data and produces an inferred function, which can be used for mapping new examples.}
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/michaelimstepf/supervised-learning"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
@@ -21,6 +21,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 1.6"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec"
-  spec.add_development_dependency "pry"
   spec.add_development_dependency "descriptive_statistics"  
 end

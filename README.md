@@ -35,7 +35,7 @@ Or install it yourself as:
 
 ## Usage
 
-1. Create a matrix of the training data.
+### 1. Create a matrix of the training data.
 
 The **output value** (the type of value you want to predict) needs to be in the **last column**. The matrix has to have a) at least two columns (one feature and one output) and b) one row. The more data you feed it, the more accurate the prediction.
 
@@ -47,21 +47,24 @@ require 'matrix'
 training_set = Matrix[ [2104, 3, 399900], [1600, 3, 329900], [3000, 4, 539900], [1940, 4, 239999] ]
 ```
 
-2. Instantiate an object with the training data.
+### 2. Instantiate an object with the training data.
 
 ```ruby
+require 'supervised_learning' # if not automatically loaded
+
 program = SupervisedLearning::LinearRegression.new(training_set)
 ```
 
-3. Create a prediction in form of a matrix. 
+### 3. Create a prediction in form of a matrix. 
 
 This matrix has one row and the **columns follow the order of the training set**. It has one column less than the training set since the output value (the last column of the training set) is the value we want to predict.
 
 ```ruby
-# Predict the price of a house of 2000 square meters with 3 bedrooms
-prediction_set = Matrix[ [2000, 3] ]
+# Predict the price of a house of 2200 square meters with 3 bedrooms
+prediction_set = Matrix[ [2200, 3] ]
+
 program.predict(prediction_set)
-=> 
+=> 454115.66
 ```
 
 ## Contributing
