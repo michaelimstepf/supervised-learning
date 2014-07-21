@@ -2,7 +2,7 @@
 
 Supervised learning is the machine learning task of inferring a function from labeled training data. A supervised learning algorithm analyzes the training data and produces an inferred function, which can be used for mapping new examples.
 
-Credits for the underlying algorithms of the functions that make predictions go to [Andrew Ng](http://cs.stanford.edu/people/ang/) at Stanford University.
+Credits for some of the algorithms used go to [Andrew Ng](http://cs.stanford.edu/people/ang/) at Stanford University.
 
 ## Example
 
