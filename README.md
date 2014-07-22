@@ -1,4 +1,4 @@
-# SupervisedLearning
+# Supervised Learning
 
 Supervised learning is the machine learning task of inferring a function from labeled training data. A supervised learning algorithm analyzes the training data and produces an inferred function, which can be used for mapping new examples.
 
