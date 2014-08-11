@@ -1,6 +1,7 @@
 require 'supervised_learning/version'
 require 'matrix'
 require 'descriptive_statistics'
+require 'matrix_extensions'
 
 module SupervisedLearning
     
@@ -12,15 +13,17 @@ module SupervisedLearning
   class LinearRegression
     # Initializes a LinearRegression object with a training set
     # @param training_set [Matrix] training_set, each feature/dimension has one column and the last column is the output column (type of value #predict will return)
-    # @raise [ArgumentError] if training_set is not a Matrix and has at least two columns and one row
+    # @raise [ArgumentError] if training_set is not a Matrix or does not have at least two columns and one row
     def initialize(training_set)      
       @training_set = training_set
       raise ArgumentError, 'input is not a Matrix' unless @training_set.is_a? Matrix
       raise ArgumentError, 'Matrix must have at least 2 columns and 1 row' unless @training_set.column_size > 1
 
-      @number_of_training_set_columns = @training_set.column_size
-      @number_of_features = @number_of_training_set_columns - 1
+      @number_of_features = @training_set.column_size - 1
       @number_of_training_examples = @training_set.row_size      
+
+      @feature_set = @training_set.clone
+      @feature_set.hpop # remove output set
 
       @output_set = @training_set.column_vectors.last      
     end
@@ -30,7 +33,8 @@ module SupervisedLearning
     # sets (more than 1000 columns) it might take too long to calculate.
     # @param prediction [Matrix] prediction    
     def predict(prediction)
-      feature_set = get_feature_set(@training_set, true)      
+      # add ones to feature set
+      feature_set = Matrix.hconcat(Matrix.one(@number_of_training_examples, 1), @feature_set)
 
       validate_prediction_input(prediction)
             
@@ -38,7 +42,7 @@ module SupervisedLearning
       theta = (transposed_feature_set * feature_set).inverse * transposed_feature_set * @output_set
 
       # add column of ones to prediction
-      prediction = get_feature_set(prediction, true)
+      prediction = Matrix.hconcat(Matrix.one(prediction.row_size, 1), prediction)
       
       result_vectorized = prediction * theta
       result = result_vectorized.to_a.first.to_f
@@ -51,14 +55,12 @@ module SupervisedLearning
     def predict_advanced(prediction, learning_rate = 0.01, iterations = 1000, debug = false) 
       validate_prediction_input(prediction)
 
-      feature_set = get_feature_set(@training_set, false) 
-      feature_set = normalize_feature_set(feature_set)
+      feature_set = normalize_feature_set(@feature_set)
       # add ones to feature set after normalization      
-      feature_set = get_feature_set(feature_set, true)
+      feature_set = Matrix.hconcat(Matrix.one(@number_of_training_examples, 1), feature_set)
 
       # prepare theta column vector with zeros
-      theta = Array.new(@number_of_training_set_columns, 0)
-      theta = Matrix.columns([theta])
+      theta = Matrix.zero(@number_of_features+1, 1)
 
       iterations.times do        
         theta = theta - (learning_rate * (1.0/@number_of_training_examples) * (feature_set * theta - @output_set).transpose * feature_set).transpose
@@ -72,41 +74,13 @@ module SupervisedLearning
       prediction = normalize_prediction(prediction)
 
       # add column of ones to prediction
-      prediction = get_feature_set(prediction, true)
+      prediction = Matrix.hconcat(Matrix.one(prediction.row_size, 1), prediction)
 
       result_vectorized = prediction * theta
       result = result_vectorized[0,0]
     end   
 
     private
-
-    # Returns a feature set without output set (last column of training set)
-    # and optionally adds a leading column of ones to a Matrix.
-    # This column of ones is the first dimension of theta to easily calculate
-    # the output of a function a*1 + b*theta_1 + c*theta_2 etc.    
-    # Ruby's Matrix class has not built-in function for prepending,
-    # hence some manual work is required.
-    # @see http://stackoverflow.com/questions/9710628/how-do-i-add-columns-and-rows-to-a-matrix-in-ruby
-    # @param matrix [Matrix] matrix
-    # @param leading_ones [Boolean] whether to prepend a column of leading ones    
-    # @return [Matrix] matrix
-    def get_feature_set(matrix, leading_ones = false)
-      # get array of columns
-      existing_columns = matrix.column_vectors      
-
-      columns = []
-      columns << Array.new(existing_columns.first.size, 1) if leading_ones           
-      # add remaining columns
-      existing_columns.each_with_index do |column, index|
-        # output column (last column of @training_set) needs to be skipped        
-        # when called from #get_feature_set, matrix includes output column
-        # when called from #prediction, matrix does not inlcude output column
-        break if index + 1 > @number_of_features    
-        columns << column.to_a
-      end
-      
-      Matrix.columns(columns)      
-    end
 
     # Validates prediction input.
     # @param prediction [Matrix] prediction
@@ -123,59 +97,43 @@ module SupervisedLearning
     # @param feature_set [Matrix] feature set
     # @return [Matrix] normalized feature set
     def normalize_feature_set(feature_set)
-      # create Matrix with mean
+      # get mean for each column
       mean = []
       feature_set.column_vectors.each do |feature_set_column|
-        # create Matrix of length of training examples for later substraction
-        mean << Array.new(@number_of_training_examples, feature_set_column.mean)
+        mean << feature_set_column.mean
       end          
-      mean = Matrix.columns(mean)
-      
-      # save for later usage as Matrix and not as Vector
-      @mean = Matrix[mean.row(0)]
+      # convert Array into Matrix of same dimension as feature_set for substraction
+      # save for later usage      
+      @mean = Matrix[mean].vcopy(@number_of_training_examples - 1)
 
       # substract mean from feature set
-      feature_set = feature_set - mean
+      feature_set = feature_set - @mean
 
-      # create Matrix with standard deviation
+      # get standard deviation for each column
       standard_deviation = []
       feature_set.column_vectors.each do |feature_set_column|
-        # create row vector with standard deviation
-        standard_deviation << [feature_set_column.standard_deviation]
-      end            
-      # save for later usage
-      @standard_deviation = Matrix.columns(standard_deviation)
-
-      # Dividing these non-square matrices has to be done manually
-      # (non square matrices have no inverse and can't be divided in Ruby)
-      # iterate through each column    
-      columns = []
-      feature_set.column_vectors.each_with_index do |feature_set_column, index|
-        # manually divide each row within column with standard deviation for that row
-        columns << feature_set_column.to_a.collect { |value| value / @standard_deviation[0,index] }
+        standard_deviation << feature_set_column.standard_deviation
       end
-      # reconstruct training set
-      feature_set = Matrix.columns(columns)      
-      feature_set
+      # convert Array into Matrix of same dimension as feature_set for substraction
+      # save for later usage         
+      @standard_deviation = Matrix[standard_deviation].vcopy(@number_of_training_examples - 1)
+
+      # divide feature set by standard deviation
+      feature_set = feature_set.element_division @standard_deviation
     end
 
     # Normalizes prediction.
     # @param prediction [Matrix] prediction
     # @return [Matrix] normalized prediction
-    def normalize_prediction(prediction)
-      # substract mean
-      prediction = prediction - @mean      
+    def normalize_prediction(prediction)      
+      # convert prediction into Matrix of same dimension as @mean for substraction
+      prediction = prediction.vcopy(@number_of_training_examples - 1)
 
-      # Dividing these non-square matrices has to be done manually
-      # (non square matrices have no inverse and can't be divided in Ruby)
-      # iterate through each column
-      columns = []
-      prediction.column_vectors.each_with_index do |prediction_column, index|
-        # manually divide each row within column with standard deviation for that row
-        columns << prediction_column / @standard_deviation[0,index]
-      end      
-      # reconstruct prediction
-      prediction = Matrix.columns(columns) 
+      # substract mean
+      prediction = prediction - @mean
+
+      # divide feature set by standard deviation
+      prediction = prediction.element_division @standard_deviation 
     end
 
     # Calculates cost of current theta.
@@ -188,4 +146,32 @@ module SupervisedLearning
       cost_vectorized[0,0]
     end    
   end
+
+  # This class uses logistic regression to make discrete predictions (true or false) based on a training set.
+  # The algorithms in #predict were provided by Andrew Ng (Stanford University).
+  # @author Michael Imstepf
+  class LogisticRegression
+    # Initializes a LogisticRegression object with a training set
+    # @param training_set [Matrix] training_set, each feature/dimension has one column and the last column is the output column (type of value #predict will return)
+    # @raise [ArgumentError] if training_set is not a Matrix or does not have at least two columns and one row
+    def initialize(training_set)
+      @training_set = training_set
+      raise ArgumentError, 'input is not a Matrix' unless @training_set.is_a? Matrix
+      raise ArgumentError, 'Matrix must have at least 2 columns and 1 row' unless @training_set.column_size > 1
+    end
+
+    private
+
+    def calculate_sigmoid(z)
+      matrix_with_ones = Matrix.one(1, z.column_size)
+      matrix_with_eulers_number = Matrix.build(1, z.column_size) {Math::E}
+      z_negative = z * -1
+      matrix_with_ones.element_division (matrix_with_ones + matrix_with_eulers_number.element_exponentiation(z_negative))
+    end
+
+    def calculate_cost
+
+    end
+  end
+
 end
